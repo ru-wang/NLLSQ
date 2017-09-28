@@ -8,7 +8,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <unordered_map>
-#include <utility>
+#include <vector>
 
 namespace ceres_pro {
 
@@ -24,26 +24,32 @@ template<typename ScalarT>
 class DenseVector {
  public:
   VectorX<ScalarT>& BlockAt(size_t row_id) {
-    CHECK(row_id >= 0 && row_id < Rows()) << "Dense vector index out of range!";
+    CHECK(row_id >= 0 && row_id < blocks_.size()) << "Dense vector index out of range!";
     return blocks_[row_id];
   }
 
   const VectorX<ScalarT>& BlockAt(size_t row_id) const {
-    CHECK(row_id >= 0 && row_id < Rows()) << "Dense vector index out of range!";
+    CHECK(row_id >= 0 && row_id < blocks_.size()) << "Dense vector index out of range!";
     return blocks_[row_id];
   }
 
-  virtual VectorX<ScalarT>& operator[](size_t row_id) { return BlockAt(row_id); }
-  virtual VectorX<ScalarT>& operator()(size_t row_id) { return BlockAt(row_id); }
+  VectorX<ScalarT>& operator[](size_t row_id) { return BlockAt(row_id); }
+  VectorX<ScalarT>& operator()(size_t row_id) { return BlockAt(row_id); }
 
-  virtual const VectorX<ScalarT>& operator[](size_t row_id) const { return BlockAt(row_id); }
-  virtual const VectorX<ScalarT>& operator()(size_t row_id) const { return BlockAt(row_id); }
+  const VectorX<ScalarT>& operator[](size_t row_id) const { return BlockAt(row_id); }
+  const VectorX<ScalarT>& operator()(size_t row_id) const { return BlockAt(row_id); }
 
-  virtual size_t PushBlockBack(VectorX<ScalarT>* block) {
+  size_t PushBlockBack(VectorX<ScalarT>* block) {
     check_dimension(block->cols);
-    size_t row_id = Rows();
+    size_t row_id = blocks_.size();
     blocks_.push_back(block);
     return row_id;
+  }
+
+  void RemoveBlockAt(size_t row_id) {
+    CHECK(row_id >= 0 && row_id < blocks_.size()) << "Dense vector index out of range!";
+    VectorX<ScalarT>* block = blocks_[row_id];
+    blocks_.erase(row_id);
   }
 
   size_t Rows() const { return blocks_.size(); }
@@ -78,14 +84,34 @@ class SparseMatrix {
   virtual MatrixX<ScalarT>& operator()(size_t row_id, size_t col_id) { return BlockAt(row_id, col_id); }
   virtual const MatrixX<ScalarT>& operator()(size_t row_id, size_t col_id) const { return BlockAt(row_id, col_id); }
 
-  virtual size_t AddBlock(const MatrixX<ScalarT>& block, size_t row_id, size_t col_id) {
-    check_dimension(block.rows(), block.cols, row_id, col_id);
+  virtual size_t AddBlock(MatrixX<ScalarT>* block, size_t row_id, size_t col_id) {
+    check_dimension(block->blocks_.size(), block->cols, row_id, col_id);
     size_t block_id = blocks_.size();
-    blocks_.push_back(block);
+    blocks_push_back(block);
     row_major_blocks_[row_id][col_id] = block_id;
     col_major_blocks_[col_id][row_id] = block_id;
     return block_id;
   }
+
+  virtual void RemoveRowAt(size_t row_id) {
+    auto row_it = row_major_blocks_.find(row_id);
+    CHECK_NE(row_it, row_major_blocks_.cend()) << "Sparse matrix index out of range!";
+    for (auto entry : *row_it) {
+      size_t block_id = entry.second;
+      blocks_.erase(block_id);
+    }
+    row_major_blocks_.erase(row_it);
+  } 
+
+  virtual void RemoveColAt(size_t col_id) {
+    auto col_it = col_major_blocks_.find(col_id);
+    CHECK_NE(col_it, col_major_blocks_.cend()) << "Sparse matrix index out of range!";
+    for (auto entry : *col_it) {
+      size_t block_id = entry.second;
+      blocks_.erase(block_id);
+    }
+    col_major_blocks_.erase(col_it);
+  } 
 
   size_t Rows() const { row_major_blocks_.size(); }
   size_t Cols() const { col_major_blocks_.size(); }
@@ -114,6 +140,7 @@ class SparseMatrix {
 };
 
 /*
+ * TODO
  * Sparse symmetric matrix structure.
  *
  * Only stores the upper triangular blocks,
@@ -141,6 +168,10 @@ class SparseSymmetricMatrix : public SparseMatrix<ScalarT> {
     col_major_blocks_[row_id][col_id] = block_id;
     return block_id;
   }
+
+  // TODO Removeblock
+  virtual void RemoveRowAt(size_t row_id) override;
+  virtual void RemoveColAt(size_t col_id) override;
 
  protected:
   using SparseMatrix<ScalarT>::blocks_;
