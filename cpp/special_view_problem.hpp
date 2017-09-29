@@ -8,6 +8,7 @@
 namespace ceres_pro {
 
 /*
+ * TODO
  * The conditional view for linear least
  * square problem class for problems of
  * the form: J'QJx = J'Qr,
@@ -29,6 +30,7 @@ class ConditionalViewProblem : public LinearProblem<ScalarT> {
 };
 
 /*
+ * TODO
  * The conditional view for linear least
  * square problem class for problems of
  * the form: J'QJx = J'Qr,
