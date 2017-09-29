@@ -16,7 +16,7 @@ template<typename ScalarT> using VectorX = Eigen::Matrix<ScalarT, Eigen::Dynamic
 template<typename ScalarT> using MatrixX = Eigen::Matrix<ScalarT, Eigen::Dynamic, Eigen::Dynamic>;
 
 /*
- * Sparse vector structure.
+ * Dense vector structure.
  *
  * All blocks are stored in column-major.
  */
@@ -35,11 +35,10 @@ class DenseVector {
 
   virtual VectorX<ScalarT>& operator[](size_t row_id) { return BlockAt(row_id); }
   virtual VectorX<ScalarT>& operator()(size_t row_id) { return BlockAt(row_id); }
-
   virtual const VectorX<ScalarT>& operator[](size_t row_id) const { return BlockAt(row_id); }
   virtual const VectorX<ScalarT>& operator()(size_t row_id) const { return BlockAt(row_id); }
 
-  virtual size_t PushBlockBack(VectorX<ScalarT>* block) {
+  virtual size_t PushBlockBack(const VectorX<ScalarT>& block) {
     check_dimension(block->cols);
     size_t row_id = Rows();
     blocks_.push_back(block);
@@ -49,10 +48,51 @@ class DenseVector {
   size_t Rows() const { return blocks_.size(); }
 
  protected:
-  std::vector<VectorX<ScalarT>> blocks_;
-
- private:
   void check_dimension(size_t cols) { CHECK_EQ(cols, 1) << "Wrong block size!"; }
+
+  std::vector<VectorX<ScalarT>> blocks_;
+};
+
+/*
+ * Sparse vector structure.
+ *
+ * All blocks are stored in column-major.
+ */
+template<typename ScalarT>
+class SparseVector {
+ public:
+  VectorX<ScalarT>& BlockAt(size_t row_id) {
+    CHECK_NE(row_major_blocks_.find(row_id), row_major_blocks_.cend()) << "Sparse matrix index out of range!";
+    size_t block_id = row_major_blocks_[row_id];
+    return blocks_[block_id];
+  }
+
+  const VectorX<ScalarT>& BlockAt(size_t row_id) const {
+    CHECK_NE(row_major_blocks_.find(row_id), row_major_blocks_.cend()) << "Sparse matrix index out of range!";
+    size_t block_id = row_major_blocks_[row_id];
+    return blocks_[block_id];
+  }
+
+  virtual VectorX<ScalarT>& operator[](size_t row_id) { return BlockAt(row_id); }
+  virtual VectorX<ScalarT>& operator()(size_t row_id) { return BlockAt(row_id); }
+  virtual const VectorX<ScalarT>& operator[](size_t row_id) const { return BlockAt(row_id); }
+  virtual const VectorX<ScalarT>& operator()(size_t row_id) const { return BlockAt(row_id); }
+
+  virtual size_t PushBlockBack(const VectorX<ScalarT>& block) {
+    check_dimension(block->cols);
+    size_t row_id = Rows();
+    blocks_.push_back(block);
+
+    return row_id;
+  }
+
+  size_t Rows() const { return blocks_.size(); }
+
+ protected:
+  void check_dimension(size_t cols) { CHECK_EQ(cols, 1) << "Wrong block size!"; }
+
+  std::vector<VectorX<ScalarT>> blocks_;
+  std::unordered_map<size_t, size_t> row_major_blocks_;
 };
 
 /*
@@ -66,13 +106,15 @@ class SparseMatrix {
   MatrixX<ScalarT>& BlockAt(size_t row_id, size_t col_id) {
     CHECK_NE(row_major_blocks_.find(row_id), row_major_blocks_.cend()) << "Sparse matrix index out of range!";
     CHECK_NE(col_major_blocks_.find(col_id), col_major_blocks_.cend()) << "Sparse matrix index out of range!";
-    return row_major_blocks_[row_id][col_id];
+    size_t block_id = row_major_blocks_[row_id][col_id];
+    return blocks_[block_id];
   }
 
   const MatrixX<ScalarT>& BlockAt(size_t row_id, size_t col_id) const {
     CHECK_NE(row_major_blocks_.find(row_id), row_major_blocks_.cend()) << "Sparse matrix index out of range!";
     CHECK_NE(col_major_blocks_.find(col_id), col_major_blocks_.cend()) << "Sparse matrix index out of range!";
-    return row_major_blocks_[row_id][col_id];
+    size_t block_id = row_major_blocks_[row_id][col_id];
+    return blocks_[block_id];
   }
 
   virtual MatrixX<ScalarT>& operator()(size_t row_id, size_t col_id) { return BlockAt(row_id, col_id); }
@@ -123,12 +165,12 @@ template<typename ScalarT>
 class SparseSymmetricMatrix : public SparseMatrix<ScalarT> {
  public:
   virtual const MatrixX<ScalarT>& BlockAt(size_t row_id, size_t col_id) const override {
-    CHECK_NE(row_major_blocks_.find(row_id), row_major_blocks_.cend()) << "Sparse symmetric matrix index out of range!";
-    CHECK_NE(col_major_blocks_.find(col_id), col_major_blocks_.cend()) << "Sparse symmetric matrix index out of range!";
+    CHECK_NE(this->row_major_blocks_.find(row_id), this->row_major_blocks_.cend()) << "Sparse symmetric matrix index out of range!";
+    CHECK_NE(this->col_major_blocks_.find(col_id), this->col_major_blocks_.cend()) << "Sparse symmetric matrix index out of range!";
     if (row_id <= col_id)
-      return row_major_blocks_[row_id][col_id];
+      return this->row_major_blocks_[row_id][col_id];
     else
-      return row_major_blocks_[col_id][row_id].transpose();
+      return this->row_major_blocks_[col_id][row_id].transpose();
   }
 
   virtual const MatrixX<ScalarT>& operator()(size_t row_id, size_t col_id) const override {
@@ -137,15 +179,10 @@ class SparseSymmetricMatrix : public SparseMatrix<ScalarT> {
 
   virtual size_t AddBlock(const MatrixX<ScalarT>& block, size_t row_id, size_t col_id) override {
     size_t block_id = SparseMatrix<ScalarT>::AddBlock(block, row_id, col_id);
-    row_major_blocks_[col_id][row_id] = block_id;
-    col_major_blocks_[row_id][col_id] = block_id;
+    this->row_major_blocks_[col_id][row_id] = block_id;
+    this->col_major_blocks_[row_id][col_id] = block_id;
     return block_id;
   }
-
- protected:
-  using SparseMatrix<ScalarT>::blocks_;
-  using SparseMatrix<ScalarT>::row_major_blocks_;
-  using SparseMatrix<ScalarT>::col_major_blocks_;
 };
 
 }

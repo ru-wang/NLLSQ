@@ -48,7 +48,7 @@ class QuadraticProblem : public LinearProblem<ScalarT> {
   virtual ~QuadraticProblem() override = default;
 
   size_t AddVariableBlock(Eigen::Matrix<ScalarT, Eigen::Dynamic, 1>* variable) {
-    size_t variable_id = x_.PushBlockBack(variable);
+    size_t variable_id = this->x_.PushBlockBack(variable);
     problem_graph_[variable_id] = std::make_pair(variable_id, std::vector<size_t>());
     return variable_id;
   }
@@ -63,24 +63,21 @@ class QuadraticProblem : public LinearProblem<ScalarT> {
 
     size_t i = 0;
     for (size_t variable_id : var_ids)
-      loss_functor->variables_[i++] = x_[variable_id];
+      loss_functor->variables_[i++] = this->x_[variable_id];
     loss_functor->information_ = info;
 
     for (size_t variable_id : var_ids)
       problem_graph_[variable_id].push_back(residual_id);
 
     for (size_t variable_id : var_ids)
-      J_(residual_id, variable_id).resize(RES_DIM, x_[variable_id].Rows());
-    b_[residual_id].resize(RES_DIM);
-    Q_(residual_id, residual_id) = info;
+      this->J_(residual_id, variable_id).resize(RES_DIM, this->x_[variable_id].Rows());
+    this->b_[residual_id].resize(RES_DIM);
+    this->Q_(residual_id, residual_id) = info;
 
     return residual_id;
   }
 
  protected:
-  using LinearProblem<ScalarT>::b_;
-  using LinearProblem<ScalarT>::x_;
-
   std::vector<void*> loss_functors_;
   std::unordered_map<void*, size_t> loss_map_;
 
