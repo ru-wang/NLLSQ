@@ -1,4 +1,10 @@
+#ifndef CERES_PRO_CERES_PRO_
+#define CERES_PRO_CERES_PRO_
+
+#include "sparse"
+
 #include "linear_solver.hpp"
 #include "loss_functor.hpp"
 #include "problem.hpp"
-#include "sparse_matrix.hpp"
+
+#endif  // CERES_PRO_CERES_PRO_

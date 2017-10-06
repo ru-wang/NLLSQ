@@ -1,7 +1,10 @@
 #ifndef CERES_PRO_LOSS_FUNCTOR_H_
 #define CERES_PRO_LOSS_FUNCTOR_H_
 
-#include "sparse_matrix.hpp"
+#include "matrix.hpp"
+#include "vector.hpp"
+
+#include <array>
 
 namespace ceres_pro {
 
@@ -15,13 +18,13 @@ class LossFunctor {
   /*
    * Compute the residuals and the corresponding Jacobians.
    * */
-  virtual bool operator()(VectorX<ScalarT> const* const* variables,
+  virtual bool operator()(MatrixX<ScalarT> const* const* variables,
                           MatrixX<ScalarT> const* information,
-                          VectorX<ScalarT>* residuals,
+                          MatrixX<ScalarT>* residuals,
                           MatrixX<ScalarT>* jacobians) const = 0;
 
  private:
-  const VectorX<ScalarT>* variables_[VAR_NUM];
+  std::array<const MatrixX<ScalarT>*, VAR_NUM> variables_;
   const MatrixX<ScalarT>* information_;
 };
 

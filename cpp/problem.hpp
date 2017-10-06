@@ -2,7 +2,8 @@
 #define CERES_PRO_PROBLEM_H_
 
 #include "loss_functor.hpp"
-#include "sparse_matrix.hpp"
+#include "matrix.hpp"
+#include "vector.hpp"
 
 #include <glog/logging.h>
 
@@ -47,7 +48,7 @@ class QuadraticProblem : public LinearProblem<ScalarT> {
 
   virtual ~QuadraticProblem() override = default;
 
-  size_t AddVariableBlock(Eigen::Matrix<ScalarT, Eigen::Dynamic, 1>* variable) {
+  size_t AddVariableBlock(MatrixX<ScalarT>* variable) {
     size_t variable_id = this->x_.PushBlockBack(variable);
     problem_graph_[variable_id] = std::make_pair(variable_id, std::vector<size_t>());
     return variable_id;
