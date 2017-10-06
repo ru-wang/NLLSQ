@@ -1,5 +1,4 @@
-#ifndef CERES_PRO_LINEAR_SOLVER_H_
-#define CERES_PRO_LINEAR_SOLVER_H_
+#pragma once
 
 namespace ceres_pro {
 
@@ -42,5 +41,3 @@ class LinearSolver : public SolverBase {
 };
 
 }
-
-#endif  // CERES_PRO_LINEAR_SOLVER_H_

@@ -1,7 +1,0 @@
-#ifndef CERES_PRO_SPARSE_
-#define CERES_PRO_SPARSE_
-
-#include "vector.hpp"
-#include "matrix.hpp"
-
-#endif  // CERES_PRO_SPARSE_

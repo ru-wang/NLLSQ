@@ -1,8 +1,6 @@
-#ifndef CERES_PRO_LOSS_FUNCTOR_H_
-#define CERES_PRO_LOSS_FUNCTOR_H_
+#pragma once
 
-#include "matrix.hpp"
-#include "vector.hpp"
+#include "matrix"
 
 #include <array>
 
@@ -29,5 +27,3 @@ class LossFunctor {
 };
 
 }
-
-#endif  // CERES_PRO_LOSS_FUNCTOR_H_

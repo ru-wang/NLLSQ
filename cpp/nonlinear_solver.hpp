@@ -1,5 +1,4 @@
-#ifndef CERES_PRO_NONLINEAR_SOLVER_H_
-#define CERES_PRO_NONLINEAR_SOLVER_H_
+#pragma once
 
 #include "linear_solver.hpp"
 
@@ -13,5 +12,3 @@ class NonlinearSolver : public SolverBase {
 };
 
 }
-
-#endif  // CERES_PRO_NONLINEAR_SOLVER_H_

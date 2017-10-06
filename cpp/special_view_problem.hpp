@@ -1,5 +1,4 @@
-#ifndef CERES_PRO_SPECIAL_VIEW_PROBLEM_H_
-#define CERES_PRO_SPECIAL_VIEW_PROBLEM_H_
+#pragma once
 
 #include "problem.hpp"
 
@@ -47,5 +46,3 @@ class MarginalViewProblem : public LinearProblem<ScalarT> {
 };
 
 }
-
-#endif  // CERES_PRO_SPECIAL_VIEW_PROBLEM_H_

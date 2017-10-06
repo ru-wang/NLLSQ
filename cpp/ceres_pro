@@ -1,10 +1,5 @@
-#ifndef CERES_PRO_CERES_PRO_
-#define CERES_PRO_CERES_PRO_
+#pragma once
 
-#include "sparse"
+namespace ceres_pro {
 
-#include "linear_solver.hpp"
-#include "loss_functor.hpp"
-#include "problem.hpp"
-
-#endif  // CERES_PRO_CERES_PRO_
+}

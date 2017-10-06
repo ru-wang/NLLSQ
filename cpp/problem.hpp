@@ -1,9 +1,7 @@
-#ifndef CERES_PRO_PROBLEM_H_
-#define CERES_PRO_PROBLEM_H_
+#pragma once
 
 #include "loss_functor.hpp"
-#include "matrix.hpp"
-#include "vector.hpp"
+#include "matrix"
 
 #include <glog/logging.h>
 

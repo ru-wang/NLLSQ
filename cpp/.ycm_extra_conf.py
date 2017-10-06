@@ -40,6 +40,8 @@ flags = [
 '-std=c++11',
 '-x', 'c++',
 
+'-I', '.',
+
 '-isystem', '/usr/include/eigen3',
 '-isystem', '/usr/include/c++/7.2.0',
 '-isystem', '/usr/local/include',
