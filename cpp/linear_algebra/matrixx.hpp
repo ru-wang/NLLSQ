@@ -30,13 +30,29 @@ class FastBlockIndex {
 template<typename ScalarT>
 class MatrixX : public Eigen::Matrix<ScalarT, Eigen::Dynamic, Eigen::Dynamic> {
  public:
-  MatrixX() { this->resize(0, 0); }
+  MatrixX() : transposed_(false) { this->resize(0, 0); }
+
   operator bool() const { return this->rows() != 0 && this->cols() != 0; }
   bool operator!() const { return !(operator bool()); }
+
   static const MatrixX& ZeroBlock() {
     static const MatrixX zero;
     return zero;
   }
+
+  MatrixX Transpose() const {
+    MatrixX transposed(*this);
+    transposed.transposed_ = true^transposed_;
+    return transposed;
+  }
+
+  MatrixX& TransposeInplace() {
+    transposed_ ^= true;
+    return (*this);
+  }
+
+ private:
+  bool transposed_;
 };
 
 }
