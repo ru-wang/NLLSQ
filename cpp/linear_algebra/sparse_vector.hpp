@@ -6,9 +6,15 @@
 
 #include <glog/logging.h>
 
+#include <ostream>
 #include <unordered_map>
 
 namespace ceres_pro {
+
+template<typename ScalarT> class SparseVector;
+
+template<typename ScalarT>
+std::ostream& operator<<(std::ostream& os, const SparseVector<ScalarT>& vec);
 
 /*******************************************************************************
  * Sparse vector structure.
@@ -17,6 +23,8 @@ namespace ceres_pro {
  *******************************************************************************/
 template<typename ScalarT>
 class SparseVector {
+  friend std::ostream& operator<<<>(std::ostream& os, const SparseVector&);
+
  public:
   SparseVector() : rows_(0) {}
   SparseVector(size_t rows) : rows_(rows) {}
@@ -52,7 +60,7 @@ const MatrixX<ScalarT>& SparseVector<ScalarT>::BlockAt(size_t row_id) const {
   auto entry = row_blocks_.find(row_id);
   if (entry != row_blocks_.end()) {
     FastBlockIndex block_id = entry->second;
-    return blocks_[block_id];
+    return blocks_.find(block_id)->second;
   } else {
     return MatrixX<ScalarT>::ZeroBlock();
   }
@@ -60,8 +68,11 @@ const MatrixX<ScalarT>& SparseVector<ScalarT>::BlockAt(size_t row_id) const {
 
 template<typename ScalarT>
 FastBlockIndex SparseVector<ScalarT>::EmplaceBlock(const MatrixX<ScalarT>& block, size_t row_id) {
+  if (!block)
+    EmplaceZeroBlock(row_id);
+
   CHECK(row_id >= 0) << "Sparse vector index out of range!";
-  check_dimension(block->cols);
+  check_dimension(block.cols());
   FastBlockIndex block_id;
   auto entry = row_blocks_.find(row_id);
   if (entry == row_blocks_.end())
@@ -119,7 +130,26 @@ template<typename ScalarT>
 void SparseVector<ScalarT>::check_dimension(size_t cols) {
   CHECK_NE(cols, 0) << "Wrong block size!";
   if (!blocks_.empty())
-    CHECK_EQ(cols, blocks_.front().cols()) << "Wrong block size!";
+    CHECK_EQ(cols, blocks_.cbegin()->second.cols()) << "Wrong block size!";
+}
+
+template<typename ScalarT>
+std::ostream& operator<<(std::ostream& os, const SparseVector<ScalarT>& vec) {
+  size_t rows = 0, cols = 0;
+  if (!vec.blocks_.empty()) {
+    rows = vec.blocks_.cbegin()->second.rows();
+    cols = vec.blocks_.cbegin()->second.cols();
+  }
+  for (size_t row = 0; row < vec.rows(); ++row) {
+    auto block_entry = vec.row_blocks_.find(row);
+    if (block_entry == vec.row_blocks_.end())
+      os << "O [" << rows << "x" << cols << "]";
+    else
+      os << vec.blocks_.find(block_entry->second)->second;
+    if (row < vec.rows() - 1)
+      os << "\n\n";
+  }
+  return os;
 }
 
 }

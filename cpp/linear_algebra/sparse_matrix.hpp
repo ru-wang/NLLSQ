@@ -66,6 +66,9 @@ const MatrixX<ScalarT>& SparseMatrix<ScalarT>::BlockAt(size_t row_id, size_t col
 
 template<typename ScalarT>
 FastBlockIndex SparseMatrix<ScalarT>::EmplaceBlock(const MatrixX<ScalarT>& block, size_t row_id, size_t col_id) {
+  if (!block)
+    EmplaceZeroBlock(row_id, col_id);
+
   CHECK(row_id >= 0) << "Sparse matrix index out of range!";
   CHECK(col_id >= 0) << "Sparse matrix index out of range!";
   check_dimension(block.rows(), block.cols(), row_id, col_id);
@@ -126,10 +129,10 @@ SparseVector<ScalarT> SparseMatrix<ScalarT>::RemoveColAt(size_t col_id) {
   auto col_entry = col_vectors_.find(col_id);
   if (col_entry != col_vectors_.end()) {
     for (auto block_entry : col_entry->second) {
-      size_t row_id = block_entry->first;
+      size_t row_id = block_entry.first;
 
-      if (block_entry->second) {
-        FastBlockIndex block_id = block_entry->second;
+      if (block_entry.second) {
+        FastBlockIndex block_id = block_entry.second;
 
         // construct the returned column vector
         col_vector.EmplaceBlock(blocks_[block_id], row_id);

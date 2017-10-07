@@ -41,6 +41,9 @@ const MatrixX<ScalarT> SparseSymmetricMatrix<ScalarT>::BlockAt(size_t row_id, si
 
 template<typename ScalarT>
 FastBlockIndex SparseSymmetricMatrix<ScalarT>::EmplaceBlock(const MatrixX<ScalarT>& block, size_t row_id, size_t col_id) {
+  if (!block)
+    EmplaceZeroBlock(row_id, col_id);
+
   FastBlockIndex block_id;
   if (row_id <= col_id) {
     block_id = SparseMatrix<ScalarT>::EmplaceBlock(block, row_id, col_id);

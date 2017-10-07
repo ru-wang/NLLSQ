@@ -59,7 +59,7 @@ FastBlockIndex DenseVector<ScalarT>::PushBlockBack(const MatrixX<ScalarT>& block
 template<typename ScalarT>
 void DenseVector<ScalarT>::SetBlockZeroAt(size_t row_id) {
   CHECK(row_id >= 0 && row_id < rows()) << "Dense vector index out of range!";
-  blocks_[row_id] = MatrixX<ScalarT>::ZeroBlock();
+  blocks_[row_id].SetZero();
 }
 
 template<typename ScalarT>
