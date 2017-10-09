@@ -16,6 +16,7 @@ template<typename ScalarT> class SparseVector;
 template<typename ScalarT>
 std::ostream& operator<<(std::ostream& os, const SparseVector<ScalarT>& vec);
 
+
 /*******************************************************************************
  * Sparse vector structure.
  *

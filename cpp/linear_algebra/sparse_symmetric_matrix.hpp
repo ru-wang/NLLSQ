@@ -8,6 +8,7 @@
 
 namespace ceres_pro {
 
+
 /*******************************************************************************
  * Sparse symmetric matrix structure.
  *

@@ -16,6 +16,7 @@ template<typename ScalarT> class SparseMatrix;
 template<typename ScalarT>
 std::ostream& operator<<(std::ostream& os, const SparseMatrix<ScalarT>& mat);
 
+
 /*******************************************************************************
  * Sparse matrix structure.
  *

@@ -11,6 +11,7 @@ template<typename ScalarT> class MatrixX;
 template<typename ScalarT>
 std::ostream& operator<<(std::ostream& os, const MatrixX<ScalarT>& block);
 
+
 /*******************************************************************************
  * Special block index for fast access.
  *******************************************************************************/
@@ -110,6 +111,14 @@ class MatrixX : private Eigen::Matrix<ScalarT, Eigen::Dynamic, Eigen::Dynamic> {
 
   size_t rows() const { return EigenMat::rows(); }
   size_t cols() const { return EigenMat::cols(); }
+
+  const EigenMat& KernalMat() const {
+    return *static_cast<const EigenMat*>(this);
+  };
+
+  EigenMat& KernalMat() {
+    return const_cast<EigenMat&>(static_cast<const MatrixX*>(this)->KernalMat());
+  };
 
  private:
   bool transposed_;
