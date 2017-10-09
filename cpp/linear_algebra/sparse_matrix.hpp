@@ -11,6 +11,11 @@
 
 namespace ceres_pro {
 
+template<typename ScalarT> class SparseMatrix;
+
+template<typename ScalarT>
+std::ostream& operator<<(std::ostream& os, const SparseMatrix<ScalarT>& mat);
+
 /*******************************************************************************
  * Sparse matrix structure.
  *
@@ -18,11 +23,13 @@ namespace ceres_pro {
  *******************************************************************************/
 template<typename ScalarT>
 class SparseMatrix {
+  friend std::ostream& operator<<<>(std::ostream& os, const SparseMatrix& mat);
+
  public:
   SparseMatrix() : rows_(0), cols_(0) {}
 
-  virtual const MatrixX<ScalarT>& BlockAt(size_t row_id, size_t col_id) const;
-  virtual const MatrixX<ScalarT>& operator()(size_t row_id, size_t col_id) const { return BlockAt(row_id, col_id); }
+  virtual MatrixX<ScalarT> BlockAt(size_t row_id, size_t col_id) const;
+  virtual MatrixX<ScalarT> operator()(size_t row_id, size_t col_id) const { return BlockAt(row_id, col_id); }
 
   virtual FastBlockIndex EmplaceBlock(const MatrixX<ScalarT>& block, size_t row_id, size_t col_id);
   virtual void EmplaceZeroBlock(size_t row_id, size_t col_id);
@@ -33,12 +40,11 @@ class SparseMatrix {
   size_t cols() const { return cols_; }
 
  protected:
-  std::unordered_map<size_t, MatrixX<ScalarT>> blocks_;
-  std::unordered_map<size_t, std::unordered_map<size_t, size_t>> row_vectors_;
-  std::unordered_map<size_t, std::unordered_map<size_t, size_t>> col_vectors_;
-
- private:
   void check_dimension(size_t rows, size_t cols, size_t row_id, size_t col_id);
+
+  std::unordered_map<FastBlockIndex, MatrixX<ScalarT>> blocks_;
+  std::unordered_map<size_t, std::unordered_map<size_t, FastBlockIndex>> row_vectors_;
+  std::unordered_map<size_t, std::unordered_map<size_t, FastBlockIndex>> col_vectors_;
 
   size_t rows_;
   size_t cols_;
@@ -50,7 +56,7 @@ class SparseMatrix {
  *******************************************************************************/
 
 template<typename ScalarT>
-const MatrixX<ScalarT>& SparseMatrix<ScalarT>::BlockAt(size_t row_id, size_t col_id) const {
+MatrixX<ScalarT> SparseMatrix<ScalarT>::BlockAt(size_t row_id, size_t col_id) const {
   CHECK(row_id >= 0 && row_id < rows()) << "Sparse matrix index out of range!";
   CHECK(col_id >= 0 && col_id < cols()) << "Sparse matrix index out of range!";
   auto row_entry = row_vectors_.find(row_id);
@@ -58,7 +64,9 @@ const MatrixX<ScalarT>& SparseMatrix<ScalarT>::BlockAt(size_t row_id, size_t col
     auto block_entry = row_entry->second.find(col_id);
     if (block_entry != row_entry->second.end()) {
       FastBlockIndex block_id = block_entry->second;
-      return blocks_[block_id];
+      auto block = blocks_.find(block_id);
+      CHECK(block != blocks_.end()) << "block[" << row_id << "," << col_id << "]";
+      return block->second;
     }
   }
   return MatrixX<ScalarT>::ZeroBlock();
@@ -75,7 +83,7 @@ FastBlockIndex SparseMatrix<ScalarT>::EmplaceBlock(const MatrixX<ScalarT>& block
 
   FastBlockIndex block_id;
   auto row_entry = row_vectors_.find(row_id);
-  if (row_entry == row_vectors_.end()) {
+  if (row_entry != row_vectors_.end()) {
     auto col_entry = row_entry->second.find(col_id);
     if (col_entry == row_entry->second.end())
       block_id = FastBlockIndex::Gen();
@@ -131,25 +139,29 @@ SparseVector<ScalarT> SparseMatrix<ScalarT>::RemoveColAt(size_t col_id) {
     for (auto block_entry : col_entry->second) {
       size_t row_id = block_entry.first;
 
-      if (block_entry.second) {
+      auto block = blocks_.find(block_entry.second);
+      CHECK(block != blocks_.end()) << "block (" << row_id << "," << col_id << ")";
+      if (block->second) {
         FastBlockIndex block_id = block_entry.second;
 
         // construct the returned column vector
-        col_vector.EmplaceBlock(blocks_[block_id], row_id);
+        col_vector.EmplaceBlock(block->second, row_id);
 
         // remove the blocks
         blocks_.erase(block_id);
       }
+    }
+  }
 
-      // update the row adjacency list
-      auto& row_vector = row_vectors_[row_id];
-      for (size_t col = col_id; col < cols(); ++col) {
-        auto next_block_entry = row_vector.find(col + 1);
-        if (next_block_entry == row_vector.end())
-          row_vector.erase(col);
-        else
-          row_vector[col] = next_block_entry->second;
-      }
+  // update the row adjacency list
+  for (size_t row = 0; row < rows(); ++row) {
+    auto& row_vector = row_vectors_[row];
+    for (size_t col = col_id; col < cols(); ++col) {
+      auto next_block_entry = row_vector.find(col + 1);
+      if (next_block_entry == row_vector.end())
+        row_vector.erase(col);
+      else
+        row_vector[col] = next_block_entry->second;
     }
   }
 
@@ -170,17 +182,59 @@ template<typename ScalarT>
 void SparseMatrix<ScalarT>::check_dimension(size_t rows, size_t cols, size_t row_id, size_t col_id) {
   auto row_entry = row_vectors_.find(row_id);
   if (row_entry != row_vectors_.end()) {
+    CHECK(!row_entry->second.empty()) << "row " << row_id << " " << "col " << col_id << " "
+                                      << "rows " << rows << " " << "cols " << cols;
     FastBlockIndex block_id = row_entry->second.cbegin()->second;
-    size_t rows_at_row = blocks_[block_id].rows();
-    CHECK_EQ(rows_at_row, rows) << "Wrong block size!";
+    auto block = blocks_.find(block_id);
+    CHECK(block != blocks_.end()) << "block (" << row_id << "," << col_id << ")";
+    size_t rows_at_row = block->second.rows();
+    CHECK(rows_at_row == rows) << "Wrong block size!";
   }
 
   auto col_entry = col_vectors_.find(col_id);
   if (col_entry != col_vectors_.end()) {
+    CHECK(!col_entry->second.empty()) << "row " << row_id << " " << "col " << col_id << " "
+                                      << "rows " << rows << " " << "cols " << cols;
     FastBlockIndex block_id = col_entry->second.cbegin()->second;
-    size_t cols_at_col = blocks_[block_id].cols();
-    CHECK_EQ(cols_at_col, cols) << "Wrong block size!";
+    auto block = blocks_.find(block_id);
+    CHECK(block != blocks_.end()) << "block (" << row_id << "," << col_id << ")";
+    size_t cols_at_col = block->second.cols();
+    CHECK(cols_at_col == cols) << "Wrong block size!";
   }
+}
+
+template<typename ScalarT>
+std::ostream& operator<<(std::ostream& os, const SparseMatrix<ScalarT>& mat) {
+  for (size_t row = 0; row < mat.rows(); ++row) {
+    auto row_entry = mat.row_vectors_.find(row);
+
+    if (row_entry != mat.row_vectors_.end()) {
+      for (size_t col = 0; col < mat.cols(); ++col) {
+        auto block_entry = row_entry->second.find(col);
+        if (block_entry == row_entry->second.end()) {
+          os << "O";
+        } else {
+          auto block = mat.blocks_.find(block_entry->second);
+          CHECK(block != mat.blocks_.end()) << "block[" << row << "," << col << "]";
+          os << block->second;
+        }
+        if (col < mat.cols() - 1)
+          os << "\t";
+      }
+      if (row < mat.rows() - 1)
+        os << "\n";
+    } else {
+      for (size_t col = 0; col < mat.cols(); ++col) {
+        os << "O";
+        if (col < mat.cols() - 1)
+          os << "\t";
+      }
+      if (row < mat.rows() - 1)
+        os << "\n";
+    }
+  }
+
+  return os;
 }
 
 }

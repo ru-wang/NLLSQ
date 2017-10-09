@@ -45,7 +45,6 @@ class SparseVector {
   std::unordered_map<FastBlockIndex, MatrixX<ScalarT>> blocks_;
   std::unordered_map<size_t, FastBlockIndex> row_blocks_;
 
- private:
   size_t rows_;
 };
 
@@ -128,9 +127,9 @@ MatrixX<ScalarT> SparseVector<ScalarT>::RemoveBlockAt(size_t row_id) {
 
 template<typename ScalarT>
 void SparseVector<ScalarT>::check_dimension(size_t cols) {
-  CHECK_NE(cols, 0) << "Wrong block size!";
+  CHECK(cols != 0) << "Wrong block size!";
   if (!blocks_.empty())
-    CHECK_EQ(cols, blocks_.cbegin()->second.cols()) << "Wrong block size!";
+    CHECK(cols == blocks_.cbegin()->second.cols()) << "Wrong block size!";
 }
 
 template<typename ScalarT>
@@ -143,11 +142,11 @@ std::ostream& operator<<(std::ostream& os, const SparseVector<ScalarT>& vec) {
   for (size_t row = 0; row < vec.rows(); ++row) {
     auto block_entry = vec.row_blocks_.find(row);
     if (block_entry == vec.row_blocks_.end())
-      os << "O [" << rows << "x" << cols << "]";
+      os << "O";
     else
       os << vec.blocks_.find(block_entry->second)->second;
     if (row < vec.rows() - 1)
-      os << "\n\n";
+      os << "\n";
   }
   return os;
 }

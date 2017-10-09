@@ -16,6 +16,7 @@ std::ostream& operator<<(std::ostream& os, const MatrixX<ScalarT>& block);
  *******************************************************************************/
 class FastBlockIndex {
   friend struct std::hash<FastBlockIndex>;
+  friend std::ostream& operator<<(std::ostream& os, const FastBlockIndex& block);
 
  public:
   FastBlockIndex() = default;
@@ -35,6 +36,11 @@ class FastBlockIndex {
   size_t id_;
 };
 
+std::ostream& operator<<(std::ostream& os, const FastBlockIndex& block) {
+  return os << block.id_;
+}
+
+
 /*******************************************************************************
  * Dense block structure.
  *
@@ -47,7 +53,7 @@ class MatrixX : private Eigen::Matrix<ScalarT, Eigen::Dynamic, Eigen::Dynamic> {
 
  public:
   MatrixX() : EigenMat(0, 0), transposed_(false), is_zero_(true) {}
-  MatrixX(size_t rows, size_t cols) : EigenMat(rows, cols), transposed_(false), is_zero_(true) {}
+  MatrixX(size_t rows, size_t cols) : EigenMat(rows, cols), transposed_(false), is_zero_(false) {}
   MatrixX(const EigenMat& eigen_mat) : EigenMat(eigen_mat), transposed_(false), is_zero_(false) {}
 
   operator bool() const {
@@ -80,6 +86,26 @@ class MatrixX : private Eigen::Matrix<ScalarT, Eigen::Dynamic, Eigen::Dynamic> {
 
   void SetZero() {
     is_zero_ = true;
+  }
+
+  bool operator==(const MatrixX& other) const {
+    if (rows() != other.rows() || cols() != other.cols())
+      return false;
+    if (is_zero_ == other.is_zero_ == true)
+      return true;
+    for (size_t row = 0; row < rows(); ++row)
+      for (size_t col = 0; col < cols(); ++col)
+        if ((*this)(row, col) != other(row, col))
+          return false;
+    return true;
+  }
+
+  const ScalarT& operator()(size_t row, size_t col) const {
+    return EigenMat::operator()(row, col);
+  }
+
+  ScalarT& operator()(size_t row, size_t col) {
+    return EigenMat::operator()(row, col);
   }
 
   size_t rows() const { return EigenMat::rows(); }

@@ -90,5 +90,3 @@ class QuadraticProblem : public LinearProblem<ScalarT> {
 };
 
 }
-
-#endif  // CERES_PRO_PROBLEM_H_

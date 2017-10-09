@@ -17,8 +17,8 @@ namespace ceres_pro {
 template<typename ScalarT>
 class SparseSymmetricMatrix : public SparseMatrix<ScalarT> {
  public:
-  virtual const MatrixX<ScalarT> BlockAt(size_t row_id, size_t col_id) const override;
-  virtual const MatrixX<ScalarT> operator()(size_t row_id, size_t col_id) const override { return BlockAt(row_id, col_id); }
+  virtual MatrixX<ScalarT> BlockAt(size_t row_id, size_t col_id) const override;
+  virtual MatrixX<ScalarT> operator()(size_t row_id, size_t col_id) const override { return BlockAt(row_id, col_id); }
 
   virtual FastBlockIndex EmplaceBlock(const MatrixX<ScalarT>& block, size_t row_id, size_t col_id) override;
   virtual void EmplaceZeroBlock(size_t row_id, size_t col_id);
@@ -32,7 +32,7 @@ class SparseSymmetricMatrix : public SparseMatrix<ScalarT> {
  *******************************************************************************/
 
 template<typename ScalarT>
-const MatrixX<ScalarT> SparseSymmetricMatrix<ScalarT>::BlockAt(size_t row_id, size_t col_id) const {
+MatrixX<ScalarT> SparseSymmetricMatrix<ScalarT>::BlockAt(size_t row_id, size_t col_id) const {
   if (row_id <= col_id)
     return SparseMatrix<ScalarT>::BlockAt(row_id, col_id);
   else
@@ -48,13 +48,13 @@ FastBlockIndex SparseSymmetricMatrix<ScalarT>::EmplaceBlock(const MatrixX<Scalar
   if (row_id <= col_id) {
     block_id = SparseMatrix<ScalarT>::EmplaceBlock(block, row_id, col_id);
     this->row_vectors_[col_id][row_id] = block_id;
-    this->col_blocks_[row_id][col_id] = block_id;
+    this->col_vectors_[row_id][col_id] = block_id;
     this->rows_ = (col_id + 1) > this->rows_ ? (col_id + 1) : this->rows_;
     this->cols_ = (row_id + 1) > this->cols_ ? (row_id + 1) : this->cols_;
   } else {
     block_id = SparseMatrix<ScalarT>::EmplaceBlock(block.Transpose(), col_id, row_id);
     this->row_vectors_[row_id][col_id] = block_id;
-    this->col_blocks_[col_id][row_id] = block_id;
+    this->col_vectors_[col_id][row_id] = block_id;
     this->rows_ = (row_id + 1) > this->rows_ ? (row_id + 1) : this->rows_;
     this->cols_ = (col_id + 1) > this->cols_ ? (col_id + 1) : this->cols_;
   }
@@ -82,11 +82,11 @@ SparseVector<ScalarT> SparseSymmetricMatrix<ScalarT>::RemoveColAt(size_t col_id)
   auto row_entry = this->row_vectors_.find(row_id);
   if (row_entry != this->row_vectors_.end()) {
     for (auto block_entry : row_entry->second) {
-      size_t col_id = block_entry->first;
+      size_t col_id = block_entry.first;
       auto& col_vector = this->col_vectors_[col_id];
       for (size_t col = col_id; col < this->cols(); ++col) {
-        auto next_block_entry = this->col_vector.find(col + 1);
-        if (next_block_entry == this->col_vector.end())
+        auto next_block_entry = col_vector.find(col + 1);
+        if (next_block_entry == col_vector.end())
           col_vector.erase(col);
         else
           col_vector[col] = next_block_entry->second;

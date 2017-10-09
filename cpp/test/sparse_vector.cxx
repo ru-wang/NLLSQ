@@ -12,15 +12,16 @@ int main(int /*argc*/, char* argv[]) {
   InitGoogleLogging(argv[0]);
   LogToStderr();
 
-  MatrixX<int> b;
-  SparseVector<int> svec;
+  MatrixX<short> b;
+  MatrixX<short> dvec;
+  SparseVector<short> svec;
 
   LOG(INFO) << "testing sparse vector\n";
-  b = MatrixX<int>::RandomBlock(3, 1); svec.EmplaceBlock(b,   0);
-  b = MatrixX<int>::RandomBlock(3, 1); svec.EmplaceBlock(b,   2);
-                                       svec.EmplaceZeroBlock( 4);
-  b = MatrixX<int>::RandomBlock(3, 1); svec.EmplaceBlock(b,   6);
-                                       svec.EmplaceZeroBlock(10);
+  b = MatrixX<short>::RandomBlock(3, 1); svec.EmplaceBlock(b,   0);
+  b = MatrixX<short>::RandomBlock(3, 1); svec.EmplaceBlock(b,   2);
+                                         svec.EmplaceZeroBlock( 4);
+  b = MatrixX<short>::RandomBlock(3, 1); svec.EmplaceBlock(b,   6);
+                                         svec.EmplaceZeroBlock(10);
   cout << "---" << svec.rows() << "x1" << "---\n"
        << svec << "\n------\n";
 
