@@ -74,8 +74,7 @@ MatrixX<ScalarT> SparseMatrix<ScalarT>::BlockAt(size_t row_id, size_t col_id) co
 
 template<typename ScalarT>
 FastBlockIndex SparseMatrix<ScalarT>::EmplaceBlock(const MatrixX<ScalarT>& block, size_t row_id, size_t col_id) {
-  if (!block)
-    EmplaceZeroBlock(row_id, col_id);
+  LOG(INFO) << "Emplacing block at \t(" << row_id << ", " << col_id << ")";
 
   CHECK(row_id >= 0) << "Sparse matrix index out of range!";
   CHECK(col_id >= 0) << "Sparse matrix index out of range!";
@@ -103,6 +102,8 @@ FastBlockIndex SparseMatrix<ScalarT>::EmplaceBlock(const MatrixX<ScalarT>& block
 
 template<typename ScalarT>
 void SparseMatrix<ScalarT>::EmplaceZeroBlock(size_t row_id, size_t col_id) {
+  LOG(INFO) << "Emplacing zero at \t(" << row_id << ", " << col_id << ")";
+
   CHECK(row_id >= 0) << "Sparse matrix index out of range!";
   CHECK(col_id >= 0) << "Sparse matrix index out of range!";
   if (row_id >= rows() || col_id >= cols()) {

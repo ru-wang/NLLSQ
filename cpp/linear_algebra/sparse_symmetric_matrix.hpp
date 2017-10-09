@@ -41,22 +41,21 @@ MatrixX<ScalarT> SparseSymmetricMatrix<ScalarT>::BlockAt(size_t row_id, size_t c
 
 template<typename ScalarT>
 FastBlockIndex SparseSymmetricMatrix<ScalarT>::EmplaceBlock(const MatrixX<ScalarT>& block, size_t row_id, size_t col_id) {
-  if (!block)
-    EmplaceZeroBlock(row_id, col_id);
-
   FastBlockIndex block_id;
-  if (row_id <= col_id) {
+  if (row_id < col_id) {
     block_id = SparseMatrix<ScalarT>::EmplaceBlock(block, row_id, col_id);
     this->row_vectors_[col_id][row_id] = block_id;
     this->col_vectors_[row_id][col_id] = block_id;
     this->rows_ = (col_id + 1) > this->rows_ ? (col_id + 1) : this->rows_;
     this->cols_ = (row_id + 1) > this->cols_ ? (row_id + 1) : this->cols_;
-  } else {
+  } else if (row_id > col_id) {
     block_id = SparseMatrix<ScalarT>::EmplaceBlock(block.Transpose(), col_id, row_id);
     this->row_vectors_[row_id][col_id] = block_id;
     this->col_vectors_[col_id][row_id] = block_id;
     this->rows_ = (row_id + 1) > this->rows_ ? (row_id + 1) : this->rows_;
     this->cols_ = (col_id + 1) > this->cols_ ? (col_id + 1) : this->cols_;
+  } else {
+    block_id = SparseMatrix<ScalarT>::EmplaceBlock(block, row_id, col_id);
   }
   return block_id;
 }
@@ -64,13 +63,15 @@ FastBlockIndex SparseSymmetricMatrix<ScalarT>::EmplaceBlock(const MatrixX<Scalar
 template<typename ScalarT>
 void SparseSymmetricMatrix<ScalarT>::EmplaceZeroBlock(size_t row_id, size_t col_id) {
   SparseMatrix<ScalarT>::EmplaceZeroBlock(row_id, col_id);
-  SparseMatrix<ScalarT>::EmplaceZeroBlock(col_id, row_id);
+  if (row_id != col_id)
+    SparseMatrix<ScalarT>::EmplaceZeroBlock(col_id, row_id);
 }
 
 template<typename ScalarT>
 void SparseSymmetricMatrix<ScalarT>::SetBlockZeroAt(size_t row_id, size_t col_id) {
   SparseMatrix<ScalarT>::SetBlockZeroAt(row_id, col_id);
-  SparseMatrix<ScalarT>::SetBlockZeroAt(col_id, row_id);
+  if (row_id != col_id)
+    SparseMatrix<ScalarT>::SetBlockZeroAt(col_id, row_id);
 }
 
 template<typename ScalarT>
