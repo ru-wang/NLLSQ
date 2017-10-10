@@ -1,0 +1,7 @@
+#pragma once
+
+#include "linear_algebra/matrixx.hpp"
+#include "linear_algebra/dense_vector.hpp"
+#include "linear_algebra/sparse_vector.hpp"
+#include "linear_algebra/sparse_matrix.hpp"
+#include "linear_algebra/sparse_symmetric_matrix.hpp"
