@@ -63,11 +63,15 @@ int main(int /*argc*/, char* argv[]) {
   LOG(INFO) << "testing sparse matrix (removing)\n";
   auto svec = ssmat.RemoveColAt(1);
   cout << "---" << svec.rows() << "x1" << "---\n"
-       << svec << "\n------\n";
+       << svec << "\n------\n"
+       << "---" << ssmat.rows() << "x" << ssmat.cols() << "---\n"
+       << ssmat << "\n------\n";
 
   svec = ssmat.RemoveColAt(5);
   cout << "---" << svec.rows() << "x1" << "---\n"
-       << svec << "\n------\n";
+       << svec << "\n------\n"
+       << "---" << ssmat.rows() << "x" << ssmat.cols() << "---\n"
+       << ssmat << "\n------\n";
 
   return 0;
 }

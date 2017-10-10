@@ -7,15 +7,17 @@ LIBS = -lglog
 
 OBJECTS = svec smat ssmat
 
+LA_SRC = ../linear_algebra/*
+
 all: $(OBJECTS)
 
-svec: ./sparse_vector.cxx
+svec: ./sparse_vector.cxx $(LA_SRC)
 	$(CXX) ./sparse_vector.cxx -o svec $(LIBS)
 
-smat: ./sparse_matrix.cxx
+smat: ./sparse_matrix.cxx $(LA_SRC)
 	$(CXX) ./sparse_matrix.cxx -o smat $(LIBS)
 
-ssmat: ./sparse_symmetric_matrix.cxx
+ssmat: ./sparse_symmetric_matrix.cxx $(LA_SRC)
 	$(CXX) ./sparse_symmetric_matrix.cxx -o ssmat $(LIBS)
 
 clean:

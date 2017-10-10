@@ -138,7 +138,7 @@ SparseVector<ScalarT> SparseMatrix<ScalarT>::RemoveColAt(size_t col_id) {
 
   auto col_entry = col_vectors_.find(col_id);
   if (col_entry != col_vectors_.end()) {
-    for (auto block_entry : col_entry->second) {
+    for (auto& block_entry : col_entry->second) {
       size_t row_id = block_entry.first;
 
       auto block = blocks_.find(block_entry.second);
@@ -156,14 +156,13 @@ SparseVector<ScalarT> SparseMatrix<ScalarT>::RemoveColAt(size_t col_id) {
   }
 
   // update the row adjacency list
-  for (size_t row = 0; row < rows(); ++row) {
-    auto& row_vector = row_vectors_[row];
+  for (auto& row_entry : row_vectors_) {
     for (size_t col = col_id; col < cols(); ++col) {
-      auto next_block_entry = row_vector.find(col + 1);
-      if (next_block_entry == row_vector.end())
-        row_vector.erase(col);
+      auto next_block_entry = row_entry.second.find(col + 1);
+      if (next_block_entry == row_entry.second.end())
+        row_entry.second.erase(col);
       else
-        row_vector[col] = next_block_entry->second;
+        row_entry.second[col] = next_block_entry->second;
     }
   }
 
@@ -177,6 +176,7 @@ SparseVector<ScalarT> SparseMatrix<ScalarT>::RemoveColAt(size_t col_id) {
   }
 
   --cols_;
+
   return col_vector;
 }
 
@@ -235,6 +235,28 @@ std::ostream& operator<<(std::ostream& os, const SparseMatrix<ScalarT>& mat) {
         os << "\n";
     }
   }
+
+//  for (size_t row = 0; row < mat.rows(); ++row) {
+//    for (size_t col = 0; col < mat.cols(); ++col) {
+//      auto col_entry = mat.col_vectors_.find(col);
+//      if (col_entry != mat.col_vectors_.end()) {
+//        auto block_entry = col_entry->second.find(row);
+//        if (block_entry != col_entry->second.end()) {
+//          auto block = mat.blocks_.find(block_entry->second);
+//          CHECK(block != mat.blocks_.end()) << "block[" << row << "," << col << "]";
+//          os << block->second;
+//        } else {
+//          os << "O";
+//        }
+//      } else {
+//        os << "O";
+//      }
+//      if (col < mat.cols() - 1)
+//        os << "\t";
+//    }
+//    if (row < mat.rows() - 1)
+//      os << "\n";
+//  }
 
   return os;
 }

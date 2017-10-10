@@ -3,6 +3,7 @@
 #include <glog/logging.h>
 
 #include <cmath>
+#include <cstdlib>
 #include <ctime>
 #include <iostream>
 #include <random>
@@ -13,8 +14,10 @@ using namespace std;
 
 int main(int /*argc*/, char* argv[]) {
   InitGoogleLogging(argv[0]);
-  LogToStderr();
+  FLAGS_logtostderr = 1;
+  FLAGS_minloglevel = 2;
 
+  srand((unsigned int) time(0));
   MatrixX<short> b(1, 1);
   MatrixX<short> dmat = MatrixX<short>::RandomBlock(15, 15);
   SparseMatrix<short> smat;
@@ -55,13 +58,14 @@ int main(int /*argc*/, char* argv[]) {
   LOG(INFO) << "testing sparse matrix (removing)\n";
   auto svec = smat.RemoveColAt(1);
   cout << "---" << svec.rows() << "x1" << "---\n"
-       << svec << "\n------\n";
+       << svec << "\n------\n"
+       << "---" << smat.rows() << "x" << smat.cols() << "---\n"
+       << smat << "\n------\n";
 
   svec = smat.RemoveColAt(5);
   cout << "---" << svec.rows() << "x1" << "---\n"
-       << svec << "\n------\n";
-
-  cout << "---" << smat.rows() << "x" << smat.cols() << "---\n"
+       << svec << "\n------\n"
+       << "---" << smat.rows() << "x" << smat.cols() << "---\n"
        << smat << "\n------\n";
 
   return 0;
